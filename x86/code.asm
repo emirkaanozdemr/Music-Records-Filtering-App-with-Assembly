@@ -11,28 +11,23 @@ include masm32.inc
     promptFetchYear db "Enter the year to fetch records: ", 0
     resultFormat db "%d - %d - %s - %s", 0
 
-    ; Buffers
     numRecords dd ?
     fetchYear dd ?
     count dd ?
     recordPositions dd ?
     filteredRecords dd ?
     
-    ; Data Structures
     records RECORD 100 dup (?, 32 dup (0), 32 dup (0))
 
 .code
 start:
-    ; Print prompt and read number of records
     invoke StdOut, addr promptNumRecords
     invoke StdIn, addr numRecords, sizeof numRecords
     mov ecx, [numRecords]
 
-    ; Allocate memory for records
     invoke HeapAlloc, GetProcessHeap(), HEAP_ZERO_MEMORY, ecx * sizeof RECORD
     mov [records], eax
 
-    ; Read record data
     mov esi, [records]
     mov edi, 0
 read_records:
@@ -45,15 +40,13 @@ read_records:
     inc edi
     loop read_records
 
-    ; Prompt for year to fetch records
     invoke StdOut, addr promptFetchYear
     invoke StdIn, addr fetchYear, sizeof fetchYear
 
-    ; Call fetchRecords function
     invoke fetchRecords, [records], [numRecords], [fetchYear], addr count, addr recordPositions
     mov edx, [count]
 
-    ; Print records
+
     mov ebx, [recordPositions]
     mov esi, [filteredRecords]
 print_records:
@@ -64,14 +57,13 @@ print_records:
     dec edx
     jnz print_records
 
-    ; Free memory and exit
+
     invoke HeapFree, GetProcessHeap(), 0, [records]
     invoke HeapFree, GetProcessHeap(), 0, [filteredRecords]
     invoke ExitProcess, 0
 
-; fetchRecords function implementation
+
 fetchRecords proc records:DWORD, n:DWORD, year:DWORD, count:DWORD, recordPositions:DWORD
-    ; Initialize local variables
     mov ecx, n
     mov edx, year
     mov ebx, records
@@ -80,11 +72,9 @@ fetchRecords proc records:DWORD, n:DWORD, year:DWORD, count:DWORD, recordPositio
     mov esi, 0
 
 filter_records:
-    ; Check if the record year matches
     mov eax, [ebx + esi* sizeof RECORD]
     cmp eax, edx
     jne not_matching
-    ; Store position
     invoke HeapReAlloc, GetProcessHeap(), HEAP_ZERO_MEMORY, [recordPositions], (eax + 1) * sizeof dd
     mov [recordPositions + eax* sizeof dd], esi
     inc eax
@@ -94,13 +84,11 @@ not_matching:
     inc esi
     loop filter_records
 
-    ; Allocate memory for filteredRecords
     invoke HeapAlloc, GetProcessHeap(), HEAP_ZERO_MEMORY, eax * sizeof RECORD
     mov [filteredRecords], eax
     mov ecx, 0
 
 copy_records:
-    ; Copy records to filteredRecords
     mov eax, [recordPositions + ecx* sizeof dd]
     mov esi, [records + eax* sizeof RECORD]
     mov [filteredRecords + ecx* sizeof RECORD], esi
